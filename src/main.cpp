@@ -57,15 +57,14 @@ void gaussianMagnitude(cv::InputArray img, cv::OutputArray output) {
 
     addWeighted(dx_squared, 0.5, dy_squared, 0.5, 0, output);
 
-
-    double minVal;
-    double maxVal;
-    cv::Point minLoc;
-    cv::Point maxLoc;
-
-    minMaxLoc(grad_x, &minVal, &maxVal, &minLoc, &maxLoc);
-
-    std::cout << minVal << ", " << maxVal << std::endl;
+    //    double minVal;
+//    double maxVal;
+//    cv::Point minLoc;
+//    cv::Point maxLoc;
+//
+//    minMaxLoc(grad_x, &minVal, &maxVal, &minLoc, &maxLoc);
+//
+//    std::cout << minVal << ", " << maxVal << std::endl;
 }
 
 void blurredGaussianMagnitudeSquared(cv::InputArray img, cv::OutputArray output) {
@@ -77,8 +76,8 @@ void blurredGaussianMagnitudeSquared(cv::InputArray img, cv::OutputArray output)
     // cv::pow(magnitude, 2, output);
 
     // Blur the result
-    int ksize = 39;
-    int sigma = 35;
+    int ksize = 9;
+    int sigma = 19;
     cv::GaussianBlur(magnitude, output,
                      cv::Size(ksize, ksize),
                      sigma, sigma, cv::BORDER_DEFAULT);
@@ -97,20 +96,33 @@ int minMaxClip(int val, int min, int max) {
     return val;
 }
 
+void clippedWindow(cv::Point &p1, cv::Point &p2, const cv::Point &centerPoint,
+                   int windowSize, const cv::Size imageSize) {
+    auto img_width = imageSize.width;
+    auto img_height = imageSize.height;
+
+    int x_start = minMaxClip(centerPoint.x - windowSize, 0, img_width - 1);
+    int x_end = minMaxClip(centerPoint.x + windowSize, 0, img_width - 1);
+
+    int y_start = minMaxClip(centerPoint.y - windowSize, 0, img_height - 1);
+    int y_end = minMaxClip(centerPoint.y + windowSize, 0, img_height - 1);
+
+    p1.x = x_start;
+    p1.y = y_start;
+    p2.x = x_end;
+    p2.y = y_end;
+}
+
 std::vector<cv::Point> updateContour(const cv::Mat &img, const Contour &contour, int windowSize) {
-    auto img_width = img.size().width;
-    auto img_height = img.size().height;
+
     std::vector<cv::Point> newPoints;
 
     for (auto point : contour.getPoints()) {
         // Get image patch
-        int x_start = minMaxClip(point.x - windowSize, 0, img_width - 1);
-        int x_end = minMaxClip(point.x + windowSize, 0, img_width - 1);
-
-        int y_start = minMaxClip(point.y - windowSize, 0, img_height - 1);
-        int y_end = minMaxClip(point.y + windowSize, 0, img_height - 1);
-
-        cv::Mat patch = img(cv::Range(y_start, y_end), cv::Range(x_start, x_end));
+        cv::Point p1;
+        cv::Point p2;
+        clippedWindow(p1, p2, point, windowSize, img.size());
+        cv::Mat patch = img(cv::Range(p1.y, p2.y), cv::Range(p1.x, p2.x));
 
         // Find minimal energy position inside the patch
         double minVal;
@@ -120,12 +132,66 @@ std::vector<cv::Point> updateContour(const cv::Mat &img, const Contour &contour,
 
         minMaxLoc(patch, &minVal, &maxVal, &minLoc, &maxLoc);
 
-        int newX = x_start + maxLoc.x;
-        int newY = y_start + maxLoc.y;
+        int newX = p1.x + minLoc.x;
+        int newY = p1.y + minLoc.y;
         newPoints.emplace_back(cv::Point(newX, newY));
     }
     return newPoints;
 }
+
+/**
+ * Elasticity is computed between two points.
+ */
+double computeElasticity(const cv::Point p1, const cv::Point p2) {
+    return pow(p2.x - p1.x, 2) + pow(p2.y - p1.y, 2);
+}
+
+/**
+ * Elasticity is computed between three points.
+ */
+double computeSmoothness(const cv::Point p1, const cv::Point p2, const cv::Point p3) {
+    double smoothnessX = pow(p3.x - 2 * p2.x + p1.x, 2);
+    double smoothnessY = pow(p3.y - 2 * p2.y + p1.y, 2);
+    return smoothnessX + smoothnessY;
+}
+
+void setContourEnergy(cv::Mat &energyContour, const Contour &contour, int windowSize, const cv::Size imageSize,
+                      double weightElasticity, double weightSmoothness) {
+    energyContour = cv::Mat::zeros(imageSize, CV_64FC1);
+
+    auto points = contour.getPoints();
+    for (int i = 0; i < points.size(); i++) {
+        auto point = points[i];
+        auto pointNext = contour.getPointByIndexWithOverflow(i + 1);
+        auto pointPrevious = contour.getPointByIndexWithOverflow(i - 1);
+        cv::Point p1;
+        cv::Point p2;
+        clippedWindow(p1, p2, point, windowSize, energyContour.size());
+
+        for (int y = p1.y; y <= p2.y; y++) {
+            for (int x = p1.x; x <= p2.x; x++) {
+                // Elasticity
+                energyContour.at<double>(y, x) += weightElasticity * computeElasticity(cv::Point(x, y), pointNext);
+                // Smoothness
+                energyContour.at<double>(y, x) += weightSmoothness * computeSmoothness(pointPrevious, cv::Point(x, y), pointNext);
+            }
+        }
+    }
+
+//    double minVal;
+//    double maxVal;
+//    cv::Point minLoc;
+//    cv::Point maxLoc;
+//    minMaxLoc(energyContour, &minVal, &maxVal, &minLoc, &maxLoc);
+//    cout << minVal <<  " " << maxVal << endl;
+//    energyContour += fabs(minVal);
+//    cv::convertScaleAbs(energyContour, energyContour);
+//
+//    minMaxLoc(energyContour, &minVal, &maxVal, &minLoc, &maxLoc);
+//    cout << minVal <<  " " << maxVal << endl;
+//    energyContour = 255 - energyContour;
+}
+
 
 int main() {
 
@@ -133,28 +199,39 @@ int main() {
     cv::Mat img = cv::imread("coin.jpeg");
 
     cv::Size s = img.size();
-    int offset = 200;
+    int offset = 50;
     std::vector<cv::Point> points{cv::Point(offset, offset),
                                   cv::Point(s.width - offset, offset),
                                   cv::Point(s.width - offset, s.height - offset),
                                   cv::Point(offset, s.height - offset)};
 
-    cv::Mat imageEnergy;
-    blurredGaussianMagnitudeSquared(img, imageEnergy);
-    //displayContour(imageEnergy, contour);
+    cv::Mat energyImage;
+    blurredGaussianMagnitudeSquared(img, energyImage);
+    // Inverse black and white, so that the energy can be minimized.
+    // Edges will be black, and, thus, zero.
+    energyImage = 255 - energyImage;
+
     cv::Mat rgbImageEnergy;
-    cv::cvtColor(imageEnergy, rgbImageEnergy, cv::COLOR_GRAY2RGB);
+    cv::cvtColor(energyImage, rgbImageEnergy, cv::COLOR_GRAY2RGB);
 
     cv::Mat drawing;
     auto contour = Contour(points);
     int numPoints = 50;
-    int windowSize = 20;
+    int windowSize = 10;
+    double weightElasticity = 0.05;
+    double weightSmoothness = 0.05;
     contour.samplePointsUniformly(numPoints);
 
+    cv::Mat energyTotal;
     double contoursDifference = 0;
     do {
-        drawing = rgbImageEnergy.clone(); // Clean image
-        auto newPoints = updateContour(imageEnergy, contour, windowSize);
+        cv::Mat energyContour;
+        setContourEnergy(energyContour, contour, windowSize, img.size(), weightElasticity, weightSmoothness);
+
+        cv::add(energyImage, energyContour, energyTotal, cv::noArray(), energyContour.type());
+        drawing = img.clone(); // Clean image
+        // cv::convertScaleAbs(drawing, drawing);
+        auto newPoints = updateContour(energyTotal, contour, windowSize);
         auto newContour = Contour(newPoints);
         newContour.samplePointsUniformly(numPoints);
         displayContour(drawing, newContour);
@@ -166,7 +243,7 @@ int main() {
     } while (contoursDifference / numPoints > 5);
 
 
-    cv::imshow("main", imageEnergy);
+    cv::imshow("main", energyImage);
 
     int ESCAPE_KEY = 27;
     while ((cv::waitKey() & 0xEFFFFF) != ESCAPE_KEY);
@@ -175,3 +252,4 @@ int main() {
 
     return 0;
 }
+

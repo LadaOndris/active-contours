@@ -22,12 +22,12 @@ public:
 
     double difference(const Contour &other) const;
 
+    cv::Point getPointByIndexWithOverflow(int index) const;
+
 private:
     double getContourLength() const;
 
     double pointsDist(cv::Point a, cv::Point b) const;
-
-    cv::Point getPointByIndexWithOverflow(int index) const;
 
     double l2norm(cv::Point p) const;
 

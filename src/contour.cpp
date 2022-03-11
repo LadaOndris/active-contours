@@ -103,8 +103,8 @@ double Contour::moveToNewUniformPosition(const cv::Point startLinePoint, const c
 }
 
 cv::Point Contour::getPointByIndexWithOverflow(int index) const {
-    auto modVal = points.size();
-    auto newIndex = ((index % modVal) + modVal) % modVal;
+    int modVal = int(points.size());
+    int newIndex = ((index % modVal) + modVal) % modVal;
     return points[newIndex];
 }
 
