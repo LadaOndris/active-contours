@@ -19,7 +19,11 @@ void displayContour(const cv::Mat &img, const Contour &contour) {
 void gaussianMagnitude(cv::InputArray img, cv::OutputArray output) {
     // Apply a cv::GaussianBlur to reduce the noise
     cv::Mat blurred;
-    cv::GaussianBlur(img, blurred, cv::Size(3, 3), 0, 0, cv::BORDER_DEFAULT);
+    int ksize = 19;
+    int sigma = 15;
+    cv::GaussianBlur(img, blurred,
+                     cv::Size(ksize, ksize),
+                     sigma, sigma, cv::BORDER_DEFAULT);
 
     //Convert to grayscale
     cv::Mat1b gray;
@@ -32,11 +36,11 @@ void gaussianMagnitude(cv::InputArray img, cv::OutputArray output) {
     cv::Mat grad_x, grad_y;
     cv::Mat abs_grad_x, abs_grad_y;
 
-//    Sobel(gray, grad_x, ddepth, 1, 0, 3, scale, delta, cv::BORDER_DEFAULT);
-//    Sobel(gray, grad_y, ddepth, 0, 1, 3, scale, delta, cv::BORDER_DEFAULT);
+    Sobel(gray, grad_x, ddepth, 1, 0, 3, scale, delta, cv::BORDER_DEFAULT);
+    Sobel(gray, grad_y, ddepth, 0, 1, 3, scale, delta, cv::BORDER_DEFAULT);
 
-    cv::Scharr(gray, grad_x, ddepth, 1, 0, scale, delta, cv::BORDER_DEFAULT);
-    cv::Scharr(gray, grad_y, ddepth, 0, 1, scale, delta, cv::BORDER_DEFAULT);
+//    cv::Scharr(gray, grad_x, ddepth, 1, 0, scale, delta, cv::BORDER_DEFAULT);
+//    cv::Scharr(gray, grad_y, ddepth, 0, 1, scale, delta, cv::BORDER_DEFAULT);
 
     convertScaleAbs(grad_x, abs_grad_x);
     convertScaleAbs(grad_y, abs_grad_y);
@@ -69,8 +73,8 @@ void blurredGaussianMagnitudeSquared(cv::InputArray img, cv::OutputArray output)
     // cv::pow(magnitude, 2, output);
 
     // Blur the result
-    int ksize = 19;
-    int sigma = 15;
+    int ksize = 39;
+    int sigma = 35;
     cv::GaussianBlur(magnitude, output,
                      cv::Size(ksize, ksize),
                      sigma, sigma, cv::BORDER_DEFAULT);
@@ -120,8 +124,6 @@ std::vector<cv::Point> updateContour(const cv::Mat &img, const Contour &contour,
     return newPoints;
 }
 
-
-
 int main() {
 
     cv::namedWindow("main", cv::WINDOW_NORMAL);
@@ -134,6 +136,7 @@ int main() {
                                   cv::Point(s.width - offset, s.height - offset),
                                   cv::Point(offset, s.height - offset)};
     auto contour = Contour(points);
+    contour.samplePointsUniformly(50);
 
     cv::Mat imageEnergy;
     blurredGaussianMagnitudeSquared(img, imageEnergy);

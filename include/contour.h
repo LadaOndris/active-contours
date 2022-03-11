@@ -18,8 +18,21 @@ public:
 
     vector<cv::Point> getPoints() const;
 
+    void samplePointsUniformly(int num_points);
+
 private:
+    double getContourLength() const;
+
+    double pointsDist(cv::Point a, cv::Point b) const;
+
+    cv::Point getPointByIndexWithOverflow(int index) const;
+
+    double l2norm(cv::Point p) const;
+
     vector<cv::Point> points;
+
+    double moveToNewUniformPosition(const cv::Point startLinePoint, const cv::Point endLinePoint,
+                                    cv::Point &currentLinePoint, double moveDist);
 };
 
 
