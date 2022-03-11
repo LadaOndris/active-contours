@@ -9,13 +9,13 @@
 void displayContour(const cv::Mat &img, const Contour &contour) {
     auto points = contour.getPoints();
 
-    for (int i = 0; i < points.size() - 1; i++) {
+    for (int i = 0; i < points.size(); i++) {
         auto lineColor = cv::Scalar(220, 50, 0);
+        auto nextPoint = contour.getPointByIndexWithOverflow(i + 1);
+        cv::line(img, points[i], nextPoint, cv::Scalar(220, 50, 0), 2);
+    }
+    for (int i = 0; i < points.size(); i++) {
         auto pointColor = cv::Scalar(0, 50, 220);
-        if (i == 0) {
-            cv::line(img, points[points.size() - 1], points[i], lineColor, 2);
-        }
-        cv::line(img, points[i], points[i + 1], cv::Scalar(220, 50, 0), 2);
         cv::circle(img, points[i], 4, pointColor, -1);
     }
 }
@@ -173,7 +173,8 @@ void setContourEnergy(cv::Mat &energyContour, const Contour &contour, int window
                 // Elasticity
                 energyContour.at<double>(y, x) += weightElasticity * computeElasticity(cv::Point(x, y), pointNext);
                 // Smoothness
-                energyContour.at<double>(y, x) += weightSmoothness * computeSmoothness(pointPrevious, cv::Point(x, y), pointNext);
+                energyContour.at<double>(y, x) +=
+                        weightSmoothness * computeSmoothness(pointPrevious, cv::Point(x, y), pointNext);
             }
         }
     }
