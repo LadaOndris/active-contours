@@ -3,6 +3,7 @@
 //
 
 #include "contour.h"
+#include <stdexcept>
 
 Contour::Contour(vector<cv::Point> contour_points) : points(contour_points) {
 
@@ -12,7 +13,38 @@ vector<cv::Point> Contour::getPoints() const {
     return points;
 }
 
+void Contour::removeDuplicatePoints() {
+    double distThreshold = 3;
+    vector<cv::Point> nonDuplicates;
+
+    int i = 0;
+    int j = 1;
+    while (j != points.size()) {
+        if (pointsDist(points[i], points[j]) < distThreshold) {
+            // The two points are at the same position.
+            // Ignore the point, and move further.
+            j++;
+        }
+        else {
+            // Points are in different position.
+            // Add the second point.
+            nonDuplicates.push_back(points[j]);
+            i = j;
+            j++;
+        }
+    }
+
+    // j % points.size() == 0
+    if (pointsDist(points[i], points[0]) > distThreshold) {
+        nonDuplicates.push_back(points[0]);
+    }
+
+    points = nonDuplicates;
+}
+
 void Contour::samplePointsUniformly(int num_points) {
+    removeDuplicatePoints();
+
     // Determine contour's length
     double contourLength = getContourLength();
     double uniformDist = contourLength / num_points;
@@ -93,4 +125,16 @@ double Contour::l2norm(cv::Point p) const {
 
 double Contour::pointsDist(cv::Point a, cv::Point b) const {
     return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+}
+
+double Contour::difference(const Contour &other) const {
+    auto otherPoints = other.getPoints();
+    if (points.size() != otherPoints.size()) {
+        throw std::invalid_argument("The number of points in the two contours do not match.");
+    }
+    double difference = 0;
+    for (int i = 0; i < points.size(); i++) {
+        difference += pointsDist(points[i], otherPoints[i]);
+    }
+    return difference;
 }

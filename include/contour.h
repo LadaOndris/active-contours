@@ -20,6 +20,8 @@ public:
 
     void samplePointsUniformly(int num_points);
 
+    double difference(const Contour &other) const;
+
 private:
     double getContourLength() const;
 
@@ -33,6 +35,8 @@ private:
 
     double moveToNewUniformPosition(const cv::Point startLinePoint, const cv::Point endLinePoint,
                                     cv::Point &currentLinePoint, double moveDist);
+
+    void removeDuplicatePoints();
 };
 
 

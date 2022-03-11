@@ -4,15 +4,19 @@
 #include <opencv2/imgproc.hpp>
 #include <contour.h>
 #include <vector>
+#include <limits>
 
 void displayContour(const cv::Mat &img, const Contour &contour) {
     auto points = contour.getPoints();
 
     for (int i = 0; i < points.size() - 1; i++) {
+        auto lineColor = cv::Scalar(220, 50, 0);
+        auto pointColor = cv::Scalar(0, 50, 220);
         if (i == 0) {
-            cv::line(img, points[points.size() - 1], points[i], (255, 0, 0));
+            cv::line(img, points[points.size() - 1], points[i], lineColor, 2);
         }
-        cv::line(img, points[i], points[i + 1], (255, 0, 0));
+        cv::line(img, points[i], points[i + 1], cv::Scalar(220, 50, 0), 2);
+        cv::circle(img, points[i], 4, pointColor, -1);
     }
 }
 
@@ -61,7 +65,7 @@ void gaussianMagnitude(cv::InputArray img, cv::OutputArray output) {
 
     minMaxLoc(grad_x, &minVal, &maxVal, &minLoc, &maxLoc);
 
-    std::cout << minVal << ", " << maxVal  << std::endl;
+    std::cout << minVal << ", " << maxVal << std::endl;
 }
 
 void blurredGaussianMagnitudeSquared(cv::InputArray img, cv::OutputArray output) {
@@ -87,15 +91,14 @@ void blurredGaussianMagnitudeSquared(cv::InputArray img, cv::OutputArray output)
 int minMaxClip(int val, int min, int max) {
     if (val < min) {
         return min;
-    }
-    else if (val > max) {
+    } else if (val > max) {
         return max;
     }
     return val;
 }
 
 std::vector<cv::Point> updateContour(const cv::Mat &img, const Contour &contour, int windowSize) {
-    auto img_width =  img.size().width;
+    auto img_width = img.size().width;
     auto img_height = img.size().height;
     std::vector<cv::Point> newPoints;
 
@@ -135,21 +138,38 @@ int main() {
                                   cv::Point(s.width - offset, offset),
                                   cv::Point(s.width - offset, s.height - offset),
                                   cv::Point(offset, s.height - offset)};
-    auto contour = Contour(points);
-    contour.samplePointsUniformly(50);
 
     cv::Mat imageEnergy;
     blurredGaussianMagnitudeSquared(img, imageEnergy);
-    displayContour(imageEnergy, contour);
+    //displayContour(imageEnergy, contour);
+    cv::Mat rgbImageEnergy;
+    cv::cvtColor(imageEnergy, rgbImageEnergy, cv::COLOR_GRAY2RGB);
 
-    auto newPoints = updateContour(imageEnergy, contour, 80);
-    auto newContour = Contour(newPoints);
-    displayContour(imageEnergy, newContour);
+    cv::Mat drawing;
+    auto contour = Contour(points);
+    int numPoints = 50;
+    int windowSize = 20;
+    contour.samplePointsUniformly(numPoints);
+
+    double contoursDifference = 0;
+    do {
+        drawing = rgbImageEnergy.clone(); // Clean image
+        auto newPoints = updateContour(imageEnergy, contour, windowSize);
+        auto newContour = Contour(newPoints);
+        newContour.samplePointsUniformly(numPoints);
+        displayContour(drawing, newContour);
+        contoursDifference = contour.difference(newContour);
+        contour = newContour;
+        cv::imshow("main", drawing);
+        while ((cv::waitKey() & 0xEFFFFF) != 27);
+        cout << contoursDifference << endl;
+    } while (contoursDifference / numPoints > 5);
+
 
     cv::imshow("main", imageEnergy);
 
     int ESCAPE_KEY = 27;
-    while((cv::waitKey() & 0xEFFFFF) != ESCAPE_KEY);
+    while ((cv::waitKey() & 0xEFFFFF) != ESCAPE_KEY);
 
     cv::destroyAllWindows();
 
