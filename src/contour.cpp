@@ -13,35 +13,6 @@ vector<cv::Point> Contour::getPoints() const {
     return points;
 }
 
-void Contour::removeDuplicatePoints() {
-    double distThreshold = 3;
-    vector<cv::Point> nonDuplicates;
-
-    int i = 0;
-    int j = 1;
-    while (j != points.size()) {
-        if (pointsDist(points[i], points[j]) < distThreshold) {
-            // The two points are at the same position.
-            // Ignore the point, and move further.
-            j++;
-        }
-        else {
-            // Points are in different position.
-            // Add the second point.
-            nonDuplicates.push_back(points[j]);
-            i = j;
-            j++;
-        }
-    }
-
-    // j % points.size() == 0
-    if (pointsDist(points[i], points[0]) > distThreshold) {
-        nonDuplicates.push_back(points[0]);
-    }
-
-    points = nonDuplicates;
-}
-
 void Contour::samplePointsUniformly(int num_points) {
     removeDuplicatePoints();
 
@@ -78,6 +49,35 @@ void Contour::samplePointsUniformly(int num_points) {
         }
     }
     points = uniformPoints;
+}
+
+void Contour::removeDuplicatePoints() {
+    double distThreshold = 3;
+    vector<cv::Point> nonDuplicates;
+
+    int i = 0;
+    int j = 1;
+    while (j != points.size()) {
+        if (pointsDist(points[i], points[j]) < distThreshold) {
+            // The two points are at the same position.
+            // Ignore the point, and move further.
+            j++;
+        }
+        else {
+            // Points are in different position.
+            // Add the second point.
+            nonDuplicates.push_back(points[j]);
+            i = j;
+            j++;
+        }
+    }
+
+    // j % points.size() == 0
+    if (pointsDist(points[i], points[0]) > distThreshold) {
+        nonDuplicates.push_back(points[0]);
+    }
+
+    points = nonDuplicates;
 }
 
 double Contour::moveToNewUniformPosition(const cv::Point startLinePoint, const cv::Point endLinePoint,
