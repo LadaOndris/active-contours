@@ -6,6 +6,8 @@
 
 class RunParams {
 public:
+    std::string videoPath;
+    std::string imagePath;
     int offsetROI = 150;
     int numPoints = 30;
     int windowSize = 28;
@@ -14,12 +16,14 @@ public:
 
     int morphSizeDilate = 24;
     int morphSizeErode = 12;
-    cv::Point3i colorOfInterest;
+    cv::Point3i colorOfInterestRGB;
 
     // Enable or disable functionality
     bool removeBackground = false;
     bool morphDilate = false;
     bool morphErode = false;
+
+    int sleep = 1; // Sleeping in milliseconds between frames
 };
 
 

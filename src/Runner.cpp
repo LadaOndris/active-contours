@@ -8,18 +8,17 @@
 #include <examples/base.h>
 
 Runner::Runner() {
-    cv::namedWindow("contour", cv::WINDOW_NORMAL);
-    cv::namedWindow("energy", cv::WINDOW_NORMAL);
-
 
 }
 
 Runner::~Runner() {
-    cv::destroyAllWindows();
 }
 
 
 void Runner::startVideo(const std::string &videoPath, const RunParams &params) {
+    cv::namedWindow("contour", cv::WINDOW_NORMAL);
+    cv::namedWindow("energy", cv::WINDOW_NORMAL);
+
     cv::VideoCapture cap(videoPath);
     cv::Mat image, drawing, postprocesedImage;
     cap >> image;
@@ -46,7 +45,7 @@ void Runner::startVideo(const std::string &videoPath, const RunParams &params) {
                 break;
 
             if (params.removeBackground) {
-                remove_background(image, postprocesedImage, params.colorOfInterest);
+                remove_background(image, postprocesedImage, params.colorOfInterestRGB);
             }
             else {
                 postprocesedImage = image;
@@ -65,7 +64,6 @@ void Runner::startVideo(const std::string &videoPath, const RunParams &params) {
                                                    params.weightElasticity,
                                                    params.weightSmoothness,
                                                    params.numPoints);
-            cout << contoursDifference << endl;
 
             drawing = image.clone(); // Clean image
             displayContour(drawing, snake.getContour());
@@ -79,7 +77,7 @@ void Runner::startVideo(const std::string &videoPath, const RunParams &params) {
             //                cv::imwrite("saved_examples/redcar_with_background_energy.png", energyImage);
             //            }
 
-            auto key = cv::waitKey(25);
+            auto key = cv::waitKey(params.sleep);
             int ESCAPE_KEY = 27;
             if ((key & 0xEFFFFF) == ESCAPE_KEY) {
                 break;
@@ -87,10 +85,63 @@ void Runner::startVideo(const std::string &videoPath, const RunParams &params) {
         }
         cap.release();
     }
+    cv::destroyAllWindows();
 }
 
-void Runner::startImage(const std::string &imagePath, const RunParams &params, int iterations) {
+void Runner::startImage(const std::string &imagePath, const RunParams &params) {
+    cv::namedWindow("contour", cv::WINDOW_NORMAL);
+    cv::namedWindow("energy", cv::WINDOW_NORMAL);
+    cv::Mat image = cv::imread(imagePath);
+    cv::Mat postprocessedImage = image.clone();
+    cv::Mat drawing;
+    cv::Size imageSize = image.size();
 
+    cv::Mat elementDilate = getStructuringElement(
+            cv::MORPH_RECT, cv::Size(2 * params.morphSizeDilate + 1, 2 * params.morphSizeDilate + 1),
+            cv::Point(params.morphSizeDilate, params.morphSizeDilate));
+    cv::Mat elementErode = getStructuringElement(
+            cv::MORPH_RECT, cv::Size(2 * params.morphSizeErode + 1, 2 * params.morphSizeErode + 1),
+            cv::Point(params.morphSizeErode, params.morphSizeErode));
+
+
+    if (params.removeBackground) {
+        remove_background(image, postprocessedImage, params.colorOfInterestRGB);
+    }
+    if (params.morphDilate) {
+        cv::morphologyEx(postprocessedImage, postprocessedImage, cv::MORPH_DILATE, elementDilate);
+    }
+    if (params.morphErode) {
+        cv::morphologyEx(postprocessedImage, postprocessedImage, cv::MORPH_ERODE, elementErode);
+    }
+
+
+    Contour contour = getInitialContour(params.offsetROI, imageSize, params.numPoints);
+    Snake snake(contour);
+    snake.updateImage(postprocessedImage);
+
+    while (true) {
+        double contoursDifference = snake.step(params.windowSize,
+                                              params.weightElasticity,
+                                              params.weightSmoothness,
+                                              params.numPoints);
+
+        drawing = image.clone(); // Clean image
+        displayContour(drawing, snake.getContour());
+
+        cv::imshow("contour", drawing);
+        cv::imshow("energy", snake.getEnergyImage());
+
+        auto key = cv::waitKey(params.sleep);
+        int ESCAPE_KEY = 27;
+        if ((key & 0xEFFFFF) == ESCAPE_KEY) {
+            break;
+        }
+    }
+
+    int ESCAPE_KEY = 27;
+    while ((cv::waitKey() & 0xEFFFFF) != ESCAPE_KEY);
+
+    cv::destroyAllWindows();
 }
 
 void Runner::remove_background(const cv::Mat &src, cv::Mat dst, cv::Point3i color) {
