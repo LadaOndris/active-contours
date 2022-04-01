@@ -39,8 +39,8 @@ Contour Snake::getContour() const {
 void Snake::gaussianMagnitude(cv::InputArray img, cv::OutputArray output) {
     // Apply a cv::GaussianBlur to reduce the noise
     cv::Mat blurred;
-    int ksize = 29;
-    int sigma = 15;
+    int ksize = 25;
+    int sigma = 19;
     cv::GaussianBlur(img, blurred,
                      cv::Size(ksize, ksize),
                      sigma, sigma, cv::BORDER_DEFAULT);
