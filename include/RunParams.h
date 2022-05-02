@@ -8,6 +8,7 @@ class RunParams {
 public:
     std::string videoPath;
     std::string imagePath;
+    std::string saveMaskPath;
     int offsetROI = 150;
     int numPoints = 30;
     int windowSize = 28;

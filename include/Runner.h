@@ -10,8 +10,11 @@ class Runner {
 public:
     Runner();
     ~Runner();
-    void startVideo(const std::string &videoPath, const RunParams &params);
+    std::vector<std::vector<cv::Point>> startVideo(const std::string &videoPath, const RunParams &params);
     void startImage(const std::string &imagePath, const RunParams &params);
+
+    void saveContoursAsMasks(std::vector<std::vector<cv::Point>> contours, std::string savePath, std::string inputVideoPath);
+
 private:
     static void remove_background(const cv::Mat &src, cv::Mat dst, cv::Point3i color);
 };

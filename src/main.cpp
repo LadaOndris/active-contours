@@ -25,6 +25,8 @@ int parseArgs(int argc, char **argv, RunParams &params) {
             params.videoPath = args[i + 1];
         } else if (args[i] == "--image") {
             params.imagePath = args[i + 1];
+        } else if (args[i] == "--saveMaskPath") {
+            params.saveMaskPath = args[i + 1];
         } else if (args[i] == "--offsetROI") {
             params.offsetROI = atoi(nextArg);
         } else if (args[i] == "--numPoints") {
@@ -75,7 +77,10 @@ int main(int argc, char **argv) {
     }
 
     if (!params.videoPath.empty()) {
-        runner.startVideo(params.videoPath, params);
+        vector<vector<cv::Point>> contours = runner.startVideo(params.videoPath, params);
+        if (!params.saveMaskPath.empty()) {
+            runner.saveContoursAsMasks(contours, params.saveMaskPath, params.videoPath);
+        }
     } else if (!params.imagePath.empty()) {
         runner.startImage(params.imagePath, params);
     }
