@@ -22,6 +22,10 @@ double Snake::step(int windowSize, double weightElasticity, double weightSmoothn
     // Update contour
     auto newPoints = updateContour(energyTotal, contour, windowSize);
     auto newContour = Contour(newPoints);
+    if (newContour.getContourLength() < 20) {
+        // The contour is too small for further processing. End it here.
+        return -1;
+    }
     newContour.samplePointsUniformly(numPoints);
 
     // Compute difference with previous contour

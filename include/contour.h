@@ -24,8 +24,9 @@ public:
 
     cv::Point getPointByIndexWithOverflow(int index) const;
 
-private:
     double getContourLength() const;
+
+private:
 
     double pointsDist(cv::Point a, cv::Point b) const;
 

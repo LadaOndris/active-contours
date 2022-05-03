@@ -64,7 +64,9 @@ std::vector<std::vector<cv::Point>> Runner::startVideo(const std::string &videoP
                                                    params.weightElasticity,
                                                    params.weightSmoothness,
                                                    params.numPoints);
-
+            if (contoursDifference == -1) {
+                break;
+            }
             drawing = image.clone(); // Clean image
             displayContour(drawing, snake.getContour());
             auto points = snake.getContour().getPoints();
@@ -126,7 +128,9 @@ void Runner::startImage(const std::string &imagePath, const RunParams &params) {
                                                params.weightElasticity,
                                                params.weightSmoothness,
                                                params.numPoints);
-
+        if (contoursDifference == -1) {
+            break;
+        }
         drawing = image.clone(); // Clean image
         displayContour(drawing, snake.getContour());
 
