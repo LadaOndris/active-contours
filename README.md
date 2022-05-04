@@ -30,7 +30,7 @@ make
 
 ### Detecting a coin in an image
 ```
-./cmake-build-debug/src/snakes_run --image data/coin.jpeg --windowSize 10 --offsetROI 60 --numPoints 40 --weightSmoothness 0.1 --weightElasticity 0.1
+./build/src/snakes_run --image data/coin.jpeg --windowSize 10 --offsetROI 60 --numPoints 40 --weightSmoothness 0.1 --weightElasticity 0.1
 ```
 <p float="left">
     <img src="https://user-images.githubusercontent.com/22337362/162012209-7154f1b2-c0a1-4314-af46-cd623d6c1872.png" alt="coin" width="520"/>
@@ -38,7 +38,7 @@ make
 
 ### Tracking a red car in a video
 ```
-./cmake-build-debug/src/snakes_run --video data/red_car.mkv --colorOfInterestRGB 240,10,70 --morphDilate true --morphErode true --numPoints 30
+./build/src/snakes_run --video data/red_car.mkv --colorOfInterestRGB 240,10,70 --morphDilate true --morphErode true --numPoints 30
 ```
 <p float="left">
     <img src="https://user-images.githubusercontent.com/22337362/162012174-f9d1cfd4-7eef-4a01-851b-218e43b9ea43.png" alt="red_car" width="520"/>
@@ -48,7 +48,7 @@ make
 High smoothness, low elasticity:
 
 ```
-./cmake-build-debug/src/snakes_run --image data/four_circles.png --windowSize 10 --offsetROI 60 --numPoints 40 --weightSmoothness 0.1 --weightElasticity 0.0001
+./build/src/snakes_run --image data/four_circles.png --windowSize 10 --offsetROI 60 --numPoints 40 --weightSmoothness 0.1 --weightElasticity 0.0001
 ```
 <p float="left">
     <img src="https://user-images.githubusercontent.com/22337362/162012101-28924e1d-f9ea-464c-886b-cf7bc17cc3d5.png" alt="four_circles" width="520"/>
@@ -56,7 +56,7 @@ High smoothness, low elasticity:
 Low smoothness, high elasticity:
 
 ```
-./cmake-build-debug/src/snakes_run --image data/four_circles.png --windowSize 10 --offsetROI 60 --numPoints 40 --weightSmoothness 0.0001 --weightElasticity 0.1
+./build/src/snakes_run --image data/four_circles.png --windowSize 10 --offsetROI 60 --numPoints 40 --weightSmoothness 0.0001 --weightElasticity 0.1
 ```
 <p float="left">
     <img src="https://user-images.githubusercontent.com/22337362/162016941-ee0b04c4-fac6-493a-9d8e-766ea9b8bbbc.png" alt="four_circles" width="520"/>
