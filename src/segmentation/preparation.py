@@ -17,8 +17,7 @@ def generate_segmentation(frame):
     # color_lower_bound = interesting_color - interval
     # color_upper_bound = interesting_color + interval
     lower = np.array([167, 0, 0])
-    upper = np.array([175, 255, 255]
-                     )
+    upper = np.array([175, 255, 255])
     mask = cv.inRange(frame_hsv, lower, upper)
     # Biggest blob detection
     contours, hierarchy = cv.findContours(mask.astype(np.uint8), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)

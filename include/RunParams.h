@@ -11,7 +11,7 @@ public:
     std::string saveMaskPath;
     int offsetROI = 150;
     int numPoints = 30;
-    int windowSize = 28;
+    int windowSize = 30;
     double weightElasticity = 0.000001;
     double weightSmoothness = 0.01;
 
