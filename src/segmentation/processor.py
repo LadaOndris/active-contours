@@ -116,15 +116,51 @@ def plot_experiment(metrics: List[Metric], points_arguments: List[int]):
 
         for experiment_idx, points in enumerate(points_arguments):
             experiment_scores = metric_scores[experiment_idx]
-            ax.plot(experiment_scores, label=F"{points}")
+            kernel = np.ones([10])
+            kernel /= np.sum(kernel)
+            experiment_scores = np.convolve(experiment_scores, kernel, 'valid')
+            ax.plot(experiment_scores, label=F"{points}", alpha=0.9)
         num_frames = metric_scores.shape[-1]
         ax.set_xlim([0, num_frames])
         ax.set_ylim([0, 1])
         ax.set_xlabel("Frame")
         ax.set_ylabel(f"{metric.name} score")
-        ax.legend()
         fig.tight_layout()
+        fig.subplots_adjust(right=0.82)
+        fig.legend(bbox_to_anchor=(1, 0.5), loc='center right', title='Points')
+        fig.savefig("evaluation.png")
         fig.show()
+
+
+def plot_segmentation_frames(predicted_path: str, reference_path: str, frame: int):
+    predicted_mask_video = cv.VideoCapture(predicted_path)
+    reference_mask_video = cv.VideoCapture(reference_path)
+
+    predicted_mask_video.set(1, frame)
+    reference_mask_video.set(1, frame)
+
+    if predicted_mask_video.isOpened() and reference_mask_video.isOpened():
+        is_prediction_valid, predicted_mask = predicted_mask_video.read()
+        is_reference_valid, reference_mask = reference_mask_video.read()
+
+        if not is_prediction_valid or not is_reference_valid:
+            raise RuntimeError("Failed to read prediction or reference mask.")
+        iou = IOU()
+        iou.update(predicted_mask, reference_mask)
+
+        fig = plt.imshow(predicted_mask, cmap='gray')
+        plt.axis('off')
+        fig.axes.get_xaxis().set_visible(False)
+        fig.axes.get_yaxis().set_visible(False)
+        plt.savefig('predicted_mask.png', bbox_inches='tight', pad_inches=0)
+        plt.show()
+
+        plt.imshow(reference_mask, cmap='gray')
+        plt.axis('off')
+        fig.axes.get_xaxis().set_visible(False)
+        fig.axes.get_yaxis().set_visible(False)
+        plt.savefig('reference_mask.png', bbox_inches='tight', pad_inches=0)
+        plt.show()
 
 
 if __name__ == "__main__":
@@ -132,6 +168,9 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.NOTSET)
 
     metrics = [IOU()]
-    points_arguments = range(10, 105, 10)
-    run_experiment_with_different_point_count(metrics, points_arguments)
+    points_arguments = list(range(10, 51, 5))
+    # run_experiment_with_different_point_count(metrics, points_arguments)
     plot_experiment(metrics, points_arguments)
+    # plot_segmentation_frames(predicted_path='mask.avi',
+    #                          reference_path='data/red_car_mask.avi',
+    #                          frame=200)
