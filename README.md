@@ -17,6 +17,15 @@ It supports both images and videos.
 * OpenCV
 * Cmake, Make
 
+## Compilation
+
+```
+mkdir build & cd build  
+cmake ../
+make
+```
+
+
 ## Examples
 
 ### Detecting a coin in an image
