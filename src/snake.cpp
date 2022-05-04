@@ -13,6 +13,13 @@ Snake::Snake(Contour initialContour) : contour(std::move(initialContour)) {
 }
 
 double Snake::step(int windowSize, double weightElasticity, double weightSmoothness, int numPoints) {
+    // Check that the points are not placed too densely.
+    double contourLength = contour.getContourLength();
+    double betweenPointsDist = contourLength / numPoints;
+    if (betweenPointsDist <= 3) {
+        return -1;
+    }
+
     // Compute energy
     cv::Mat energyContour;
     cv::Mat energyTotal;
@@ -177,11 +184,10 @@ void Snake::setContourEnergy(cv::Mat &energyContour, const Contour &contour, int
 
         for (int y = p1.y; y <= p2.y; y++) {
             for (int x = p1.x; x <= p2.x; x++) {
-                // Elasticity
-                energyContour.at<double>(y, x) += weightElasticity * computeElasticity(cv::Point(x, y), pointNext);
-                // Smoothness
-                energyContour.at<double>(y, x) +=
-                        weightSmoothness * computeSmoothness(pointPrevious, cv::Point(x, y), pointNext);
+                double elasticity = weightElasticity * computeElasticity(cv::Point(x, y), pointNext);
+                double smoothness = weightSmoothness * computeSmoothness(pointPrevious, cv::Point(x, y), pointNext);
+                double internalEnergy = elasticity + smoothness;
+                energyContour.at<double>(y, x) += internalEnergy;
             }
         }
     }
